@@ -1,6 +1,6 @@
 { This file was automatically created by Lazarus. Do not edit!
   This source is only used to compile and install the package.
-}
+ }
 
 unit DunTif;
 
@@ -8,7 +8,9 @@ unit DunTif;
 interface
 
 uses
-  DunTif.Model, DunTif.ModelReader, DunTif.ModelWriter, LazarusPackageIntf;
+  DunTif.Model, DunTif.TiffTypes, DunTif.BinReader, DunTif.TiffParser, 
+  DunTif.DecodeBaseline, DunTif.ModelReader, DunTif.ModelWriter, 
+  LazarusPackageIntf;
 
 implementation
 

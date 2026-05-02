@@ -12,9 +12,17 @@ type
 
   { TDunTifDocument — растерен модел за един TIFF кадър (v1: една страница). }
 
+  TDunTifMetadata = record
+    Compression: Word;
+    Photometric: Word;
+    SamplesPerPixel: Word;
+    BitsPerSample: string;
+  end;
+
   TDunTifDocument = class
   private
     FImage: TFPMemoryImage;
+    FMetadata: TDunTifMetadata;
     function GetWidth: Integer;
     function GetHeight: Integer;
   public
@@ -23,6 +31,7 @@ type
     property Image: TFPMemoryImage read FImage;
     property Width: Integer read GetWidth;
     property Height: Integer read GetHeight;
+    property Metadata: TDunTifMetadata read FMetadata write FMetadata;
   end;
 
 implementation

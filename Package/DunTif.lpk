@@ -18,6 +18,22 @@
         <UnitName Value="DunTif.Model"/>
       </Item>
       <Item>
+        <Filename Value="..\Source\DunTif.TiffTypes.pas"/>
+        <UnitName Value="DunTif.TiffTypes"/>
+      </Item>
+      <Item>
+        <Filename Value="..\Source\DunTif.BinReader.pas"/>
+        <UnitName Value="DunTif.BinReader"/>
+      </Item>
+      <Item>
+        <Filename Value="..\Source\DunTif.TiffParser.pas"/>
+        <UnitName Value="DunTif.TiffParser"/>
+      </Item>
+      <Item>
+        <Filename Value="..\Source\DunTif.DecodeBaseline.pas"/>
+        <UnitName Value="DunTif.DecodeBaseline"/>
+      </Item>
+      <Item>
         <Filename Value="..\Source\DunTif.ModelReader.pas"/>
         <UnitName Value="DunTif.ModelReader"/>
       </Item>

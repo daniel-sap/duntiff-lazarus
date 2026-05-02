@@ -18,21 +18,56 @@ type
 implementation
 
 uses
-  FPReadTiff;
+  DunTif.TiffTypes,
+  DunTif.TiffParser,
+  DunTif.DecodeBaseline;
+
+function FormatTiffReadFailure(const E: Exception): string;
+var
+  msg: string;
+begin
+  msg := E.Message;
+  { FPReadTiff does not decode PhotometricInterpretation 6 (YCbCr), common with JPEG-in-TIFF. }
+  if Pos('Photometric interpretation not handled (6)', msg) > 0 then
+    Exit(msg + ' — FPReadTiff (fcl-image) does not support PhotometricInterpretation 6 (YCbCr), often used with JPEG-in-TIFF. Re-export as RGB TIFF or PNG.');
+  if Pos('Photometric interpretation not handled', msg) > 0 then
+    Exit(msg + ' — This photometric mode is not implemented in FPReadTiff; try RGB or grayscale TIFF.');
+  Result := msg;
+end;
 
 class function TDunTifModelReader.LoadFromStream(AStream: TStream): TDunTifDocument;
+var
+  frame: TTiffFrame;
+  bitsText: string;
+  i: Integer;
+  md: TDunTifMetadata;
 begin
   if AStream = nil then
     raise EDunTifError.Create('DunTif: stream is nil');
 
   Result := TDunTifDocument.Create;
   try
-    Result.Image.LoadFromStream(AStream);
+    frame := TDunTifTiffParser.ParseSingleFrame(AStream);
+    TDunTifBaselineDecoder.DecodeToFPImage(AStream, frame, Result.Image);
+
+    bitsText := '';
+    for i := 0 to High(frame.BitsPerSample) do
+    begin
+      if bitsText <> '' then
+        bitsText := bitsText + ',';
+      bitsText := bitsText + IntToStr(frame.BitsPerSample[i]);
+    end;
+
+    md.Compression := frame.Compression;
+    md.Photometric := frame.Photometric;
+    md.SamplesPerPixel := frame.SamplesPerPixel;
+    md.BitsPerSample := bitsText;
+    Result.Metadata := md;
   except
     on E: Exception do
     begin
       Result.Free;
-      raise EDunTifError.CreateFmt('DunTif: failed to read TIFF stream (%s)', [E.Message]);
+      raise EDunTifError.CreateFmt('DunTif: failed to read TIFF stream (%s)', [FormatTiffReadFailure(E)]);
     end;
   end;
 end;
