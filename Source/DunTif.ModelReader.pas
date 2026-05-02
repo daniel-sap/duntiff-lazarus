@@ -21,7 +21,9 @@ uses
   DunTif.TiffTypes,
   DunTif.TiffParser,
   DunTif.DecodeBaseline,
-  DunTif.DecodePackBits;
+  DunTif.DecodePackBits,
+  DunTif.DecodeLzw,
+  DunTif.DecodeDeflate;
 
 function FormatTiffReadFailure(const E: Exception): string;
 var
@@ -54,6 +56,10 @@ begin
         TDunTifBaselineDecoder.DecodeToFPImage(AStream, frame, Result.Image);
       Ord(tcPackBits):
         TDunTifPackBitsDecoder.DecodeToFPImage(AStream, frame, Result.Image);
+      Ord(tcLZW):
+        TDunTifLzwDecoder.DecodeToFPImage(AStream, frame, Result.Image);
+      Ord(tcDeflateAdobe), Ord(tcDeflate):
+        TDunTifDeflateDecoder.DecodeToFPImage(AStream, frame, Result.Image);
     else
       raise EDunTifError.CreateFmt('DunTif: unsupported compression %d', [frame.Compression]);
     end;

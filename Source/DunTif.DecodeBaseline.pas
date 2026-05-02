@@ -19,7 +19,8 @@ implementation
 
 uses
   DunTif.BinReader,
-  DunTif.DecodeRaster8;
+  DunTif.DecodeRaster8,
+  DunTif.DecodePredictor;
 
 class procedure TDunTifBaselineDecoder.DecodeToFPImage(AStream: TStream; const Frame: TTiffFrame; AOut: TFPMemoryImage);
 var
@@ -76,6 +77,7 @@ begin
 
       r.SeekAbs(Frame.StripOffsets[stripIdx]);
       buf := r.ReadBytes(Integer(needBytes));
+      DunTifApplyPredictorToStrip(buf, Frame, rowsThisStrip);
 
       TDunTifRaster8.WriteChunkyStrip(buf, Frame, AOut, rowStart, rowsThisStrip);
       Inc(rowStart, rowsThisStrip);

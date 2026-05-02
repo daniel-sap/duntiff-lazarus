@@ -71,6 +71,8 @@ type
     PlanarConfig: Word;
     StripOffsets: array of Int64;
     StripByteCounts: array of Int64;
+    { Tag 317; 1 = none, 2 = horizontal differencing (applied after LZW/Deflate). Default 1 if absent. }
+    Predictor: Word;
   end;
 
 implementation

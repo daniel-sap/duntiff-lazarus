@@ -12,10 +12,13 @@
   - `DunTif.ModelWriter.pas` — запис на `TDunTifDocument` чрез **fcl-image** `TFPWriterTiff`
   - `DunTif.TiffTypes.pas` — общи TIFF типове/records/enums
   - `DunTif.BinReader.pas` — endian-aware бинарни четения + проверки на граници (`EDunTifParseError`)
-  - `DunTif.TiffParser.pas` — парсване на TIFF IFD за Milestones 1–2 (`TDunTifTiffParser.ParseSingleFrame`)
+  - `DunTif.TiffParser.pas` — парсване на TIFF IFD (`TDunTifTiffParser.ParseSingleFrame`)
   - `DunTif.DecodeRaster8.pas` — общ chunky 8-bit RGB/gray strip writer
   - `DunTif.DecodeBaseline.pas` — некомпресирани strips → `TFPMemoryImage`
   - `DunTif.DecodePackBits.pas` — PackBits (`32773`) strips → `TFPMemoryImage`
+  - `DunTif.DecodePredictor.pas` — обратно horizontal predictor (таг 317 = 2)
+  - `DunTif.TiffLzw.pas` / `DunTif.DecodeLzw.pas` — TIFF LZW (`5`)
+  - `DunTif.DecodeDeflate.pas` — zlib strips (`8`, `32946`) чрез PasZLib (`paszlib`)
 - `Package/`
   - `DunTif.lpk` / `DunTif.pas`
 - `Demo/`
@@ -24,7 +27,7 @@
   - `README.md` — английска версия
   - `README.bg.md` — този файл (българска версия)
   - `ARCHITECTURE.md` / `ARCHITECTURE.bg.md` — архитектура и поток на данните
-  - `TIFF_NOTES.md` / `TIFF_NOTES.bg.md` — тагове/defaults + ограничения за Milestones 1–2
+  - `TIFF_NOTES.md` / `TIFF_NOTES.bg.md` — тагове/defaults + ограничения на четеца
 
 ## Зависимости (Lazarus package)
 
@@ -32,6 +35,7 @@
 
 - `FCL`
 - `fcl-image` (за `TFPMemoryImage` и `TFPWriterTiff`)
+- **PasZLib** (Pascal zlib за Deflate inflate — без TIFF DLL)
 
 ## Публичен API
 
@@ -58,25 +62,26 @@
 - `Metadata: TDunTifMetadata` — накратко декодирани TIFF полета за UI/логване:
   - `Compression`, `Photometric`, `SamplesPerPixel`, `BitsPerSample` (текст със запетаи)
 
-## Какво се поддържа днес (Milestones 1–2)
+## Какво се поддържа днес (четец Milestones 1–3)
 
-Pure Pascal пътят поддържа **strip TIFF** с **none** или **PackBits**:
+Pure Pascal четецът поддържа **strip TIFF** с компресии:
 
 - Един IFD (една страница)
 - Само strips (не tiles)
-- `Compression = 1` (none) или `Compression = 32773` (PackBits)
+- `Compression` в `{1, 5, 8, 32946, 32773}` — None, LZW, Adobe Deflate, ZIP/Deflate, PackBits
 - `PhotometricInterpretation` в `{0,1,2}` (валидирани като подходящи за Milestone 1)
 - `BitsPerSample = 8`
 - `PlanarConfiguration = 1` (chunky). Ако таг **284 липсва**, по конвенция се приема **chunky**.
 - `SamplesPerPixel` в `{1,3}`
+- `Predictor = 1` или `2`; ако таг **317 липсва** → **1**
 
 Всичко извън този подмножество трябва да завърши с ясна грешка.
 
 ## Пътна карта (накратко)
 
 1. Milestone 1: baseline некомпресиран RGB/Gray + strips (pure Pascal четене)
-2. Milestone 2 (текущо): PackBits (`32773`) при същите photometric/planar ограничения като Milestone 1
-3. Milestone 3: LZW (`5`) + Deflate (`8` / `32946`)
+2. Milestone 2: PackBits (`32773`)
+3. Milestone 3 (текущ четец): LZW (`5`) + zlib Deflate strips (`8` / `32946`) + predictor таг **317**
 4. Milestone 4: JPEG-in-TIFF (`Compression=7`) + `Photometric=6` (YCbCr)
 
 Виж също:

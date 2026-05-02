@@ -12,10 +12,13 @@ The long-term goal is a **pure Pascal TIFF decoder** implemented incrementally (
   - `DunTif.ModelWriter.pas` — save `TDunTifDocument` using **fcl-image** `TFPWriterTiff`
   - `DunTif.TiffTypes.pas` — shared TIFF-ish records/enums
   - `DunTif.BinReader.pas` — endian-aware binary reads + bounds checks (`EDunTifParseError`)
-  - `DunTif.TiffParser.pas` — TIFF IFD parsing for Milestones 1–2 (`TDunTifTiffParser.ParseSingleFrame`)
+  - `DunTif.TiffParser.pas` — TIFF IFD parsing (`TDunTifTiffParser.ParseSingleFrame`)
   - `DunTif.DecodeRaster8.pas` — shared chunky 8-bit RGB/gray strip writer
   - `DunTif.DecodeBaseline.pas` — uncompressed strips → `TFPMemoryImage`
   - `DunTif.DecodePackBits.pas` — PackBits (`32773`) strips → `TFPMemoryImage`
+  - `DunTif.DecodePredictor.pas` — horizontal predictor (tag 317 = 2) undo after compressed strips
+  - `DunTif.TiffLzw.pas` / `DunTif.DecodeLzw.pas` — TIFF LZW (`5`)
+  - `DunTif.DecodeDeflate.pas` — zlib-wrapped strips (`8`, `32946`) via FPC **PasZLib** (`paszlib`)
 - `Package/`
   - `DunTif.lpk` / `DunTif.pas`
 - `Demo/`
@@ -24,7 +27,7 @@ The long-term goal is a **pure Pascal TIFF decoder** implemented incrementally (
   - `README.md` — this file (English)
   - `README.bg.md` — Bulgarian version
   - `ARCHITECTURE.md` / `ARCHITECTURE.bg.md` — module map + data flow
-  - `TIFF_NOTES.md` / `TIFF_NOTES.bg.md` — TIFF tags/defaults + Milestones 1–2 limitations
+  - `TIFF_NOTES.md` / `TIFF_NOTES.bg.md` — TIFF tags/defaults + reader limitations
 
 ## Dependencies (Lazarus package)
 
@@ -32,6 +35,7 @@ The long-term goal is a **pure Pascal TIFF decoder** implemented incrementally (
 
 - `FCL`
 - `fcl-image` (for `TFPMemoryImage` and `TFPWriterTiff`)
+- **PasZLib** (Pascal zlib implementation; used for Deflate strip inflate — no TIFF-native DLL)
 
 ## Public API
 
@@ -58,25 +62,26 @@ Writing currently uses **fcl-image** `TFPWriterTiff` (not the pure Pascal encode
 - `Metadata: TDunTifMetadata` — small decoded TIFF header fields useful for UI/logging:
   - `Compression`, `Photometric`, `SamplesPerPixel`, `BitsPerSample` (comma-separated text)
 
-## Supported TIFF subset today (Milestones 1–2)
+## Supported TIFF subset today (Milestones 1–3 reader)
 
-The pure Pascal path supports **strip TIFF** with **none** or **PackBits** compression:
+The pure Pascal reader supports **strip TIFF** with:
 
 - One IFD (single page)
 - Strips only (no tiles)
-- `Compression = 1` (none) or `Compression = 32773` (PackBits)
+- `Compression` in `{1, 5, 8, 32946, 32773}` — None, LZW, Adobe Deflate, ZIP/Deflate, PackBits
 - `PhotometricInterpretation` in `{0,1,2}` (common grayscale / RGB baseline cases handled by validation)
 - `BitsPerSample = 8`
 - `PlanarConfiguration = 1` (chunky). If tag **284 is missing**, it defaults to **chunky** per TIFF convention.
 - `SamplesPerPixel` in `{1,3}`
+- `Predictor = 1` (none) or `2` (horizontal differencing); if absent, **1** is assumed.
 
 Anything outside this set should fail fast with a descriptive error.
 
 ## Roadmap (high level)
 
 1. Milestone 1: baseline uncompressed RGB/Gray + strips (pure Pascal read path)
-2. Milestone 2 (current): PackBits (`32773`) on the same photometric/planar subset as Milestone 1
-3. Milestone 3: LZW (`5`) + Deflate (`8` / `32946`)
+2. Milestone 2: PackBits (`32773`)
+3. Milestone 3 (current reader scope): LZW (`5`) + zlib-wrapped Deflate strips (`8` / `32946`) + predictor tag **317**
 4. Milestone 4: JPEG-in-TIFF (`Compression=7`) + `Photometric=6` (YCbCr) conversion
 
 See also:

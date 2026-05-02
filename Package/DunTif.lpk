@@ -42,6 +42,22 @@
         <UnitName Value="DunTif.DecodePackBits"/>
       </Item>
       <Item>
+        <Filename Value="..\Source\DunTif.DecodePredictor.pas"/>
+        <UnitName Value="DunTif.DecodePredictor"/>
+      </Item>
+      <Item>
+        <Filename Value="..\Source\DunTif.TiffLzw.pas"/>
+        <UnitName Value="DunTif.TiffLzw"/>
+      </Item>
+      <Item>
+        <Filename Value="..\Source\DunTif.DecodeLzw.pas"/>
+        <UnitName Value="DunTif.DecodeLzw"/>
+      </Item>
+      <Item>
+        <Filename Value="..\Source\DunTif.DecodeDeflate.pas"/>
+        <UnitName Value="DunTif.DecodeDeflate"/>
+      </Item>
+      <Item>
         <Filename Value="..\Source\DunTif.ModelReader.pas"/>
         <UnitName Value="DunTif.ModelReader"/>
       </Item>
@@ -53,9 +69,6 @@
     <RequiredPkgs>
       <Item>
         <PackageName Value="FCL"/>
-      </Item>
-      <Item>
-        <PackageName Value="fcl-image"/>
       </Item>
     </RequiredPkgs>
     <UsageOptions>

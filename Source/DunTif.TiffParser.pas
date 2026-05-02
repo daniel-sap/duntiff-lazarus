@@ -36,6 +36,7 @@ const
   TAG_RowsPerStrip = 278;
   TAG_StripByteCounts = 279;
   TAG_PlanarConfiguration = 284;
+  TAG_Predictor = 317;
 
 function InlineShort(ValueOrOffset: Cardinal; Endian: TTiffEndian): Word;
 begin
@@ -290,6 +291,16 @@ begin
     else
       Result.PlanarConfig := Ord(tpcChunky);
 
+    if FindEntry(entries, TAG_Predictor, e) then
+    begin
+      if e.TagType = Ord(tttShort) then
+        Result.Predictor := InlineShort(e.ValueOrOffset, endian)
+      else
+        raise EDunTifParseError.Create('DunTif: Predictor has unsupported type');
+    end
+    else
+      Result.Predictor := 1;
+
     RequireTag('StripOffsets(273)', FindEntry(entries, TAG_StripOffsets, e));
     stripOffsets := ReadOffsetsAsInt64(r, e, endian);
 
@@ -317,9 +328,12 @@ begin
   if (Result.Width = 0) or (Result.Height = 0) then
     raise EDunTifParseError.Create('DunTif: invalid TIFF dimensions');
 
-  if (Result.Compression <> Ord(tcNone)) and (Result.Compression <> Ord(tcPackBits)) then
+  if (Result.Compression <> Ord(tcNone)) and (Result.Compression <> Ord(tcPackBits)) and
+    (Result.Compression <> Ord(tcLZW)) and (Result.Compression <> Ord(tcDeflateAdobe)) and
+    (Result.Compression <> Ord(tcDeflate)) then
     raise EDunTifParseError.CreateFmt(
-      'DunTif: unsupported compression %d (Milestone 1–2 supports None=1 and PackBits=32773)', [Result.Compression]);
+      'DunTif: unsupported compression %d (supports None=1, PackBits=32773, LZW=5, Deflate=8/32946)',
+      [Result.Compression]);
 
   if not ((Result.Photometric = Ord(tpRGB)) or (Result.Photometric = Ord(tpWhiteIsZero)) or (Result.Photometric = Ord(tpBlackIsZero))) then
     raise EDunTifParseError.CreateFmt('DunTif: unsupported photometric %d (Milestone 1 supports RGB/Gray only)', [Result.Photometric]);
@@ -345,6 +359,9 @@ begin
 
   if Result.RowsPerStrip = 0 then
     raise EDunTifParseError.Create('DunTif: invalid RowsPerStrip=0');
+
+  if (Result.Predictor <> 1) and (Result.Predictor <> 2) then
+    raise EDunTifParseError.CreateFmt('DunTif: unsupported Predictor %d (supports none=1 or horizontal=2)', [Result.Predictor]);
 end;
 
 end.

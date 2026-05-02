@@ -1,6 +1,6 @@
 # Архитектура на DunTif
 
-Този документ описва как е организиран пакетът DunTif и как минава потокът от данни при Milestones 1–2 (четене).
+Този документ описва как е организиран пакетът DunTif и как минава потокът от данни при strip четене.
 
 ## Карта на модулите
 
@@ -9,14 +9,18 @@
 | `DunTif.Model` | `TDunTifDocument` притежава `TFPMemoryImage` и `TDunTifMetadata`. Дефинира `EDunTifError`. |
 | `DunTif.BinReader` | Ниско ниво четене от поток с endian и проверки на граници. Вдига `EDunTifParseError`. |
 | `DunTif.TiffTypes` | Общи enums/records (`TTiffFrame`, compression/photometric и др.). |
-| `DunTif.TiffParser` | Парсва TIFF header + първи IFD към `TTiffFrame` и валидира ограниченията за Milestones 1–2. |
+| `DunTif.TiffParser` | Парсва TIFF header + първи IFD към `TTiffFrame` и валидира ограниченията за четеца. |
 | `DunTif.DecodeRaster8` | Записва декодирани chunky 8-bit strip проби в `TFPMemoryImage` (общо за декодерите). |
+| `DunTif.DecodePredictor` | Обратно horizontal predictor (таг **317 = 2**) върху суров strip буфер при нужда. |
 | `DunTif.DecodeBaseline` | Чете некомпресирани strip байтове и подава към `DecodeRaster8`. |
 | `DunTif.DecodePackBits` | Разкомпресира PackBits strips и подава към `DecodeRaster8`. |
+| `DunTif.TiffLzw` | TIFF LZW битов поток → сурови байтове. |
+| `DunTif.DecodeLzw` | LZW на strip + predictor + `DecodeRaster8`. |
+| `DunTif.DecodeDeflate` | zlib inflate на strip (PasZLib) + predictor + `DecodeRaster8`. |
 | `DunTif.ModelReader` | Оркестрира parse + decode; попълва `TDunTifDocument.Metadata`. |
 | `DunTif.ModelWriter` | Запис чрез `TFPWriterTiff` (fcl-image). |
 
-## Път при четене (Milestones 1–2)
+## Път при четене (компресия)
 
 ```mermaid
 flowchart LR
@@ -26,19 +30,23 @@ flowchart LR
   decode{Compression}
   baseline[DunTifBaselineDecoder]
   packbits[DunTifPackBitsDecoder]
+  lzw[DunTifLzwDecoder]
+  deflate[DunTifDeflateDecoder]
   doc[TDunTifDocument]
   fpimg[TFPMemoryImage]
 
   tifStream --> tiffParser --> frame --> decode
   decode -->|1| baseline --> fpimg
   decode -->|32773| packbits --> fpimg
+  decode -->|5| lzw --> fpimg
+  decode -->|8 / 32946| deflate --> fpimg
   doc --> fpimg
 ```
 
 Подробности:
 
 1. `TDunTifModelReader.LoadFromStream` извиква `TDunTifTiffParser.ParseSingleFrame`, който парсва TIFF от началото на потока (вътрешно през `TDunTifBinReader`).
-2. Според `TTiffFrame.Compression` се извиква или `TDunTifBaselineDecoder`, или `TDunTifPackBitsDecoder`, които попълват `TFPMemoryImage` чрез `TDunTifRaster8.WriteChunkyStrip` (`Colors[x,y]` като `TFPColor`).
+2. Според `TTiffFrame.Compression` се избира декодер; всички записват чрез `TDunTifRaster8.WriteChunkyStrip`. При `Predictor = 2` се прилага `DecodePredictor` след декомпресия на всеки strip.
 
 ## Път при запис (текущ)
 

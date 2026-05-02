@@ -10,7 +10,9 @@ interface
 uses
   DunTif.Model, DunTif.TiffTypes, DunTif.BinReader, DunTif.TiffParser, 
   DunTif.DecodeRaster8, DunTif.DecodeBaseline, DunTif.DecodePackBits, 
-  DunTif.ModelReader, DunTif.ModelWriter, LazarusPackageIntf;
+  DunTif.DecodePredictor, DunTif.TiffLzw, DunTif.DecodeLzw, 
+  DunTif.DecodeDeflate, DunTif.ModelReader, DunTif.ModelWriter, 
+  LazarusPackageIntf;
 
 implementation
 
