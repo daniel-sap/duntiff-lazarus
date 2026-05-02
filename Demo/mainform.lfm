@@ -1,0 +1,99 @@
+object FrmMain: TFrmMain
+  Left = 336
+  Height = 600
+  Top = 192
+  Width = 900
+  Caption = 'DunTif Demo'
+  ClientHeight = 600
+  ClientWidth = 900
+  LCLVersion = '4.0.0.0'
+  OnDestroy = FormDestroy
+  object PanelTop: TPanel
+    Left = 0
+    Height = 64
+    Top = 0
+    Width = 900
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 64
+    ClientWidth = 900
+    TabOrder = 0
+    object btnOpen: TButton
+      Left = 12
+      Height = 30
+      Top = 10
+      Width = 90
+      Caption = 'Open...'
+      TabOrder = 0
+      OnClick = btnOpenClick
+    end
+    object btnLoad: TButton
+      Left = 112
+      Height = 30
+      Top = 10
+      Width = 90
+      Caption = 'Load'
+      TabOrder = 1
+      OnClick = btnLoadClick
+    end
+    object btnSaveAs: TButton
+      Left = 212
+      Height = 30
+      Top = 10
+      Width = 90
+      Caption = 'Save As...'
+      TabOrder = 2
+      OnClick = btnSaveAsClick
+    end
+    object btnRoundtrip: TButton
+      Left = 312
+      Height = 30
+      Top = 10
+      Width = 110
+      Caption = 'Roundtrip'
+      TabOrder = 3
+      OnClick = btnRoundtripClick
+    end
+    object lblFile: TLabel
+      Left = 12
+      Height = 15
+      Top = 45
+      Width = 400
+      Caption = '(no file selected)'
+    end
+    object lblStatus: TLabel
+      Left = 440
+      Height = 15
+      Top = 45
+      Width = 440
+      Caption = ''
+    end
+  end
+  object PanelMain: TPanel
+    Left = 0
+    Height = 536
+    Top = 64
+    Width = 900
+    Align = alClient
+    BevelOuter = bvLowered
+    ClientHeight = 536
+    ClientWidth = 900
+    TabOrder = 1
+    object PaintBox1: TPaintBox
+      Left = 0
+      Height = 536
+      Top = 0
+      Width = 900
+      Align = alClient
+      OnPaint = PaintBox1Paint
+    end
+  end
+  object OpenDialog1: TOpenDialog
+    Left = 48
+    Top = 120
+  end
+  object SaveDialog1: TSaveDialog
+    Left = 48
+    Top = 176
+  end
+end
