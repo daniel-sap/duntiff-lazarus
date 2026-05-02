@@ -30,8 +30,16 @@
         <UnitName Value="DunTif.TiffParser"/>
       </Item>
       <Item>
+        <Filename Value="..\Source\DunTif.DecodeRaster8.pas"/>
+        <UnitName Value="DunTif.DecodeRaster8"/>
+      </Item>
+      <Item>
         <Filename Value="..\Source\DunTif.DecodeBaseline.pas"/>
         <UnitName Value="DunTif.DecodeBaseline"/>
+      </Item>
+      <Item>
+        <Filename Value="..\Source\DunTif.DecodePackBits.pas"/>
+        <UnitName Value="DunTif.DecodePackBits"/>
       </Item>
       <Item>
         <Filename Value="..\Source\DunTif.ModelReader.pas"/>

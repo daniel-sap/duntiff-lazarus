@@ -1,4 +1,4 @@
-# TIFF notes for DunTif (Milestone 1)
+# TIFF notes for DunTif (Milestones 1–2)
 
 This document summarizes what DunTif’s **pure Pascal** reader expects today and how it interprets a few TIFF conventions.
 
@@ -6,33 +6,35 @@ It is **not** a full TIFF specification. For the complete standard, refer to Ado
 
 ## Scope
 
-Milestone 1 focuses on **baseline uncompressed strip images**:
+Milestones 1–2 focus on **strip images** with **uncompressed** or **PackBits** sample data:
 
-- `Compression = 1` (none)
+- `Compression = 1` (none) or `Compression = 32773` (PackBits)
 - `PhotometricInterpretation` in `{0,1,2}` (validated)
 - `BitsPerSample = 8`
 - `SamplesPerPixel` in `{1,3}`
 - `PlanarConfiguration = 1` (chunky). If tag **284 is absent**, DunTif assumes **chunky** (default per TIFF practice).
 
+For **`Compression = 32773`**, each `StripByteCounts` entry is the **compressed** byte length for that strip; after PackBits decompression the size must equal `rowsInStrip * width * bytesPerPixel`.
+
 Not supported yet (planned milestones):
 
 - Tiles (`TileWidth`, `TileLength`, …)
-- Compress PackBits / LZW / Deflate / JPEG
+- LZW / Deflate / JPEG
 - Photometric palette (`3`), CMYK (`5`), YCbCr (`6`), Lab (`8`), …
 - ExtraSamples / alpha handling beyond “expand gray/RGB”
 - Orientation (`274`) is **ignored** (pixels are read in stored order)
 
 ## Tags DunTif reads (minimum set)
 
-These tags are expected for Milestone 1 decoding paths:
+These tags are expected for Milestone 1–2 decoding paths:
 
 | Tag | ID | Notes |
 |-----|---:|-------|
 | ImageWidth | 256 | SHORT or LONG |
 | ImageLength | 257 | SHORT or LONG |
 | BitsPerSample | 258 | SHORT array; must match `SamplesPerPixel` (with small allowance noted in parser for some grayscale writers) |
-| Compression | 259 | SHORT; must be `1` |
-| PhotometricInterpretation | 262 | SHORT; must be `0`, `1`, or `2` for Milestone 1 |
+| Compression | 259 | SHORT; must be `1` or `32773` |
+| PhotometricInterpretation | 262 | SHORT; must be `0`, `1`, or `2` for Milestone 1–2 |
 | StripOffsets | 273 | SHORT or LONG array |
 | SamplesPerPixel | 277 | SHORT; must be `1` or `3` |
 | RowsPerStrip | 278 | SHORT or LONG; must not be `0` |
@@ -46,11 +48,13 @@ DunTif computes how many rows belong to each strip using:
 - `RowsPerStrip`
 - image height
 
-Then it verifies each strip has enough bytes for:
+For **uncompressed** (`Compression = 1`), each `StripByteCounts` value must be **at least** the raw size:
 
 `rowsInStrip * width * bytesPerPixel`
 
 where `bytesPerPixel` is `SamplesPerPixel` for 8-bit chunky storage.
+
+For **PackBits** (`Compression = 32773`), `StripByteCounts` is the **compressed** size; decompression must yield exactly that raw size.
 
 ## Photometric interpretation values (subset)
 
@@ -65,7 +69,7 @@ Milestone 1 accepts `0/1/2` only. Value `6` is expected to fail until the YCbCr/
 
 ## Errors you may see
 
-- `EDunTifParseError`: invalid TIFF structure, unsupported tag typing for Milestone 1, out-of-bounds reads, strip size mismatch.
+- `EDunTifParseError`: invalid TIFF structure, unsupported tag typing for Milestones 1–2, out-of-bounds reads, strip size mismatch.
 - `EDunTifError`: outer wrapper from `ModelReader`/`ModelWriter`.
 
 Note: `ModelReader` contains legacy message augmentation for a few **fcl-image** error strings (`Photometric interpretation not handled …`). With the pure Pascal reader, those strings are uncommon; errors are usually DunTif’s own validation messages.

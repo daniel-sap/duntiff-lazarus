@@ -12,8 +12,10 @@
   - `DunTif.ModelWriter.pas` — запис на `TDunTifDocument` чрез **fcl-image** `TFPWriterTiff`
   - `DunTif.TiffTypes.pas` — общи TIFF типове/records/enums
   - `DunTif.BinReader.pas` — endian-aware бинарни четения + проверки на граници (`EDunTifParseError`)
-  - `DunTif.TiffParser.pas` — парсване на TIFF IFD за Milestone 1 (`TDunTifTiffParser.ParseSingleFrame`)
-  - `DunTif.DecodeBaseline.pas` — Milestone 1 baseline декод към `TFPMemoryImage`
+  - `DunTif.TiffParser.pas` — парсване на TIFF IFD за Milestones 1–2 (`TDunTifTiffParser.ParseSingleFrame`)
+  - `DunTif.DecodeRaster8.pas` — общ chunky 8-bit RGB/gray strip writer
+  - `DunTif.DecodeBaseline.pas` — некомпресирани strips → `TFPMemoryImage`
+  - `DunTif.DecodePackBits.pas` — PackBits (`32773`) strips → `TFPMemoryImage`
 - `Package/`
   - `DunTif.lpk` / `DunTif.pas`
 - `Demo/`
@@ -22,7 +24,7 @@
   - `README.md` — английска версия
   - `README.bg.md` — този файл (българска версия)
   - `ARCHITECTURE.md` / `ARCHITECTURE.bg.md` — архитектура и поток на данните
-  - `TIFF_NOTES.md` / `TIFF_NOTES.bg.md` — тагове/defaults + ограничения за Milestone 1
+  - `TIFF_NOTES.md` / `TIFF_NOTES.bg.md` — тагове/defaults + ограничения за Milestones 1–2
 
 ## Зависимости (Lazarus package)
 
@@ -56,13 +58,13 @@
 - `Metadata: TDunTifMetadata` — накратко декодирани TIFF полета за UI/логване:
   - `Compression`, `Photometric`, `SamplesPerPixel`, `BitsPerSample` (текст със запетаи)
 
-## Какво се поддържа днес (Milestone 1)
+## Какво се поддържа днес (Milestones 1–2)
 
-Pure Pascal пътят поддържа **baseline некомпресиран strip TIFF**:
+Pure Pascal пътят поддържа **strip TIFF** с **none** или **PackBits**:
 
 - Един IFD (една страница)
 - Само strips (не tiles)
-- `Compression = 1` (none)
+- `Compression = 1` (none) или `Compression = 32773` (PackBits)
 - `PhotometricInterpretation` в `{0,1,2}` (валидирани като подходящи за Milestone 1)
 - `BitsPerSample = 8`
 - `PlanarConfiguration = 1` (chunky). Ако таг **284 липсва**, по конвенция се приема **chunky**.
@@ -72,8 +74,8 @@ Pure Pascal пътят поддържа **baseline некомпресиран st
 
 ## Пътна карта (накратко)
 
-1. Milestone 1 (текущо): baseline некомпресиран RGB/Gray + strips (pure Pascal четене)
-2. Milestone 2: PackBits (`32773`)
+1. Milestone 1: baseline некомпресиран RGB/Gray + strips (pure Pascal четене)
+2. Milestone 2 (текущо): PackBits (`32773`) при същите photometric/planar ограничения като Milestone 1
 3. Milestone 3: LZW (`5`) + Deflate (`8` / `32946`)
 4. Milestone 4: JPEG-in-TIFF (`Compression=7`) + `Photometric=6` (YCbCr)
 

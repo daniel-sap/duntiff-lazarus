@@ -317,8 +317,9 @@ begin
   if (Result.Width = 0) or (Result.Height = 0) then
     raise EDunTifParseError.Create('DunTif: invalid TIFF dimensions');
 
-  if Result.Compression <> Ord(tcNone) then
-    raise EDunTifParseError.CreateFmt('DunTif: unsupported compression %d (Milestone 1 supports only None=1)', [Result.Compression]);
+  if (Result.Compression <> Ord(tcNone)) and (Result.Compression <> Ord(tcPackBits)) then
+    raise EDunTifParseError.CreateFmt(
+      'DunTif: unsupported compression %d (Milestone 1–2 supports None=1 and PackBits=32773)', [Result.Compression]);
 
   if not ((Result.Photometric = Ord(tpRGB)) or (Result.Photometric = Ord(tpWhiteIsZero)) or (Result.Photometric = Ord(tpBlackIsZero))) then
     raise EDunTifParseError.CreateFmt('DunTif: unsupported photometric %d (Milestone 1 supports RGB/Gray only)', [Result.Photometric]);

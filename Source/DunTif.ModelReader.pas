@@ -20,7 +20,8 @@ implementation
 uses
   DunTif.TiffTypes,
   DunTif.TiffParser,
-  DunTif.DecodeBaseline;
+  DunTif.DecodeBaseline,
+  DunTif.DecodePackBits;
 
 function FormatTiffReadFailure(const E: Exception): string;
 var
@@ -48,7 +49,14 @@ begin
   Result := TDunTifDocument.Create;
   try
     frame := TDunTifTiffParser.ParseSingleFrame(AStream);
-    TDunTifBaselineDecoder.DecodeToFPImage(AStream, frame, Result.Image);
+    case frame.Compression of
+      Ord(tcNone):
+        TDunTifBaselineDecoder.DecodeToFPImage(AStream, frame, Result.Image);
+      Ord(tcPackBits):
+        TDunTifPackBitsDecoder.DecodeToFPImage(AStream, frame, Result.Image);
+    else
+      raise EDunTifError.CreateFmt('DunTif: unsupported compression %d', [frame.Compression]);
+    end;
 
     bitsText := '';
     for i := 0 to High(frame.BitsPerSample) do
