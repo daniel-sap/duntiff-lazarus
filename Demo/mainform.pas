@@ -111,7 +111,14 @@ begin
   try
     FDoc := TDunTifModelReader.LoadFromFile(FFileName);
     RedrawImage;
-    SetStatus(Format('Loaded %dx%d', [FDoc.Width, FDoc.Height]), clDefault);
+    SetStatus(Format('Loaded %dx%d  comp=%d  photo=%d  spp=%d  bps=[%s]', [
+      FDoc.Width,
+      FDoc.Height,
+      FDoc.Metadata.Compression,
+      FDoc.Metadata.Photometric,
+      FDoc.Metadata.SamplesPerPixel,
+      FDoc.Metadata.BitsPerSample
+    ]), clDefault);
   except
     on E: Exception do
     begin
