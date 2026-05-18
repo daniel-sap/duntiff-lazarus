@@ -14,6 +14,7 @@ type
   { TFrmMain }
 
   TFrmMain = class(TForm)
+    btnNew: TButton;
     btnOpen: TButton;
     btnLoad: TButton;
     btnSaveAs: TButton;
@@ -25,6 +26,7 @@ type
     PanelMain: TPanel;
     PanelTop: TPanel;
     SaveDialog1: TSaveDialog;
+    procedure btnNewClick(Sender: TObject);
     procedure btnLoadClick(Sender: TObject);
     procedure btnOpenClick(Sender: TObject);
     procedure btnRoundtripClick(Sender: TObject);
@@ -135,6 +137,32 @@ begin
   PaintBox1.Invalidate;
 end;
 
+procedure TFrmMain.btnNewClick(Sender: TObject);
+var
+  green: TFPColor;
+begin
+  ClearModel;
+  FDoc := TDunTifDocument.Create;
+  green.alpha := $ffff;
+  green.red := 0;
+  green.green := $ffff;
+  green.blue := 0;
+  try
+    FDoc.Initialize(800, 600, pfRGB8, green);
+    SetFileName('(new document)');
+    RedrawImage;
+    SetStatus(Format('New %dx%d RGB8 (green fill)', [FDoc.Width, FDoc.Height]), clGreen);
+  except
+    on E: Exception do
+    begin
+      ClearModel;
+      RedrawImage;
+      SetStatus(E.Message, clRed);
+      MessageDlg('New document failed', E.Message, mtError, [mbOK], 0);
+    end;
+  end;
+end;
+
 procedure TFrmMain.btnOpenClick(Sender: TObject);
 begin
   OpenDialog1.Filter := 'TIFF images|*.tif;*.tiff|All files|*.*';
@@ -149,9 +177,9 @@ end;
 
 procedure TFrmMain.btnSaveAsClick(Sender: TObject);
 begin
-  if FDoc = nil then
+  if (FDoc = nil) or (not FDoc.IsReady) then
   begin
-    SetStatus('Nothing to save — load a TIFF first.', clMaroon);
+    SetStatus('Nothing to save — load a TIFF or create New first.', clMaroon);
     Exit;
   end;
   SaveDialog1.Filter := 'TIFF images|*.tif;*.tiff|All files|*.*';
@@ -175,9 +203,9 @@ var
   tempPath: string;
   doc2: TDunTifDocument;
 begin
-  if FDoc = nil then
+  if (FDoc = nil) or (not FDoc.IsReady) then
   begin
-    SetStatus('Load a file first.', clMaroon);
+    SetStatus('Load a file or create New first.', clMaroon);
     Exit;
   end;
   tempPath := IncludeTrailingPathDelimiter(GetTempDir) +
@@ -210,11 +238,11 @@ var
   R: TRect;
 begin
   R := PaintBox1.ClientRect;
-  if (FDoc = nil) or (FDoc.Image = nil) or (FDoc.Width = 0) or (FDoc.Height = 0) then
+  if (FDoc = nil) or (not FDoc.IsReady) then
   begin
     PaintBox1.Canvas.Brush.Color := clBtnFace;
     PaintBox1.Canvas.FillRect(R);
-    PaintBox1.Canvas.TextOut(12, 12, 'Open a .tif file and press Load.');
+    PaintBox1.Canvas.TextOut(12, 12, 'Open a .tif and Load, or press New.');
     Exit;
   end;
   try

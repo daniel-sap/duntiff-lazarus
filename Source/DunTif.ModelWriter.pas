@@ -26,8 +26,13 @@ var
 begin
   if AStream = nil then
     raise EDunTifError.Create('DunTif: stream is nil');
-  if (ADoc = nil) or (ADoc.Image = nil) then
-    raise EDunTifError.Create('DunTif: document or image is nil');
+  if ADoc = nil then
+    raise EDunTifError.Create('DunTif: document is nil');
+  if not ADoc.IsReady then
+    raise EDunTifNotInitialized.Create(
+      'DunTif: cannot save — document not initialized (call Initialize or load a TIFF first)');
+  if ADoc.Image = nil then
+    raise EDunTifError.Create('DunTif: document image is nil');
 
   w := TFPWriterTiff.Create;
   try

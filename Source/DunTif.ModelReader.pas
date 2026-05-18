@@ -77,6 +77,7 @@ begin
     md.SamplesPerPixel := frame.SamplesPerPixel;
     md.BitsPerSample := bitsText;
     Result.Metadata := md;
+    Result.MarkReadyAfterLoad;
   except
     on E: Exception do
     begin

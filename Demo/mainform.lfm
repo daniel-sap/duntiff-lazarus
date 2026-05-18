@@ -18,40 +18,49 @@ object FrmMain: TFrmMain
     ClientHeight = 64
     ClientWidth = 900
     TabOrder = 0
-    object btnOpen: TButton
+    object btnNew: TButton
       Left = 12
       Height = 30
       Top = 10
       Width = 90
-      Caption = 'Open...'
+      Caption = 'New...'
       TabOrder = 0
-      OnClick = btnOpenClick
+      OnClick = btnNewClick
     end
-    object btnLoad: TButton
+    object btnOpen: TButton
       Left = 112
       Height = 30
       Top = 10
       Width = 90
-      Caption = 'Load'
+      Caption = 'Open...'
       TabOrder = 1
-      OnClick = btnLoadClick
+      OnClick = btnOpenClick
     end
-    object btnSaveAs: TButton
+    object btnLoad: TButton
       Left = 212
       Height = 30
       Top = 10
       Width = 90
-      Caption = 'Save As...'
+      Caption = 'Load'
       TabOrder = 2
+      OnClick = btnLoadClick
+    end
+    object btnSaveAs: TButton
+      Left = 312
+      Height = 30
+      Top = 10
+      Width = 90
+      Caption = 'Save As...'
+      TabOrder = 3
       OnClick = btnSaveAsClick
     end
     object btnRoundtrip: TButton
-      Left = 312
+      Left = 412
       Height = 30
       Top = 10
       Width = 110
       Caption = 'Roundtrip'
-      TabOrder = 3
+      TabOrder = 4
       OnClick = btnRoundtripClick
     end
     object lblFile: TLabel
