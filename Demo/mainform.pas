@@ -50,7 +50,7 @@ implementation
 
 uses
   DunTif.ModelReader, DunTif.ModelWriter,
-  FPImage;
+  FPImage, NewDocForm;
 
 {$R *.lfm}
 
@@ -137,21 +137,41 @@ begin
   PaintBox1.Invalidate;
 end;
 
+function TColorToFPColor(AColor: TColor): TFPColor;
+begin
+  Result.alpha := $ffff;
+  Result.red := Word(Red(AColor)) * 257;
+  Result.green := Word(Green(AColor)) * 257;
+  Result.blue := Word(Blue(AColor)) * 257;
+end;
+
 procedure TFrmMain.btnNewClick(Sender: TObject);
 var
-  green: TFPColor;
+  params: TNewDocParams;
+  pf: TDunTifPixelFormat;
+  fill: TFPColor;
+  fmtName: string;
 begin
+  if not TFrmNewDoc.Execute(Self, params) then
+    Exit;
+
+  if params.PixelFormat = ndpfGray8 then
+    pf := pfGray8
+  else
+    pf := pfRGB8;
+  fill := TColorToFPColor(params.FillColor);
+
   ClearModel;
   FDoc := TDunTifDocument.Create;
-  green.alpha := $ffff;
-  green.red := 0;
-  green.green := $ffff;
-  green.blue := 0;
   try
-    FDoc.Initialize(800, 600, pfRGB8, green);
+    FDoc.Initialize(params.Width, params.Height, pf, fill);
     SetFileName('(new document)');
     RedrawImage;
-    SetStatus(Format('New %dx%d RGB8 (green fill)', [FDoc.Width, FDoc.Height]), clGreen);
+    if pf = pfGray8 then
+      fmtName := 'Gray8'
+    else
+      fmtName := 'RGB8';
+    SetStatus(Format('New %dx%d %s', [FDoc.Width, FDoc.Height, fmtName]), clGreen);
   except
     on E: Exception do
     begin

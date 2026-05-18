@@ -44,6 +44,14 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="MainForm"/>
       </Unit>
+      <Unit>
+        <Filename Value="NewDocForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrmNewDoc"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="NewDocForm"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
