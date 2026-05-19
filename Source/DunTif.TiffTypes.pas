@@ -59,6 +59,13 @@ type
     ValueOrOffset: Cardinal;
   end;
 
+  { First 8 bytes of a TIFF stream (byte order, magic 42, offset of first IFD). }
+  TTiffFileHeader = record
+    Endian: TTiffEndian;
+    FirstIfdOffset: Cardinal;
+  end;
+
+  { One IFD / one image page: metadata and strip pointers for decoders (no pixel data). }
   TTiffFrame = record
     Endian: TTiffEndian;
     Width: Cardinal;

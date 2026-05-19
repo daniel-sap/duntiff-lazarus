@@ -1,4 +1,4 @@
-# TIFF notes for DunTif (reader milestones 1–3)
+# TIFF notes for DunTif (reader milestones 1–4)
 
 This document summarizes what DunTif’s **pure Pascal** reader expects today and how it interprets a few TIFF conventions.
 
@@ -6,10 +6,10 @@ It is **not** a full TIFF specification. For the complete standard, refer to Ado
 
 ## Scope
 
-The strip reader supports **uncompressed**, **PackBits**, **LZW**, or **zlib-wrapped Deflate** (Adobe `8` / TIFF `32946`) on the same **8-bit chunky RGB/gray** subset:
+The strip reader supports **uncompressed**, **PackBits**, **LZW**, **zlib-wrapped Deflate** (Adobe `8` / TIFF `32946`), and **JPEG-in-TIFF** (`7`) on the same **8-bit chunky** subset:
 
-- `Compression` in `{1, 5, 8, 32946, 32773}`
-- `PhotometricInterpretation` in `{0,1,2}` (validated)
+- `Compression` in `{1, 5, 7, 8, 32946, 32773}`
+- `PhotometricInterpretation` in `{0,1,2}` for non-JPEG; **`6` (YCbCr)** with `Compression=7`
 - `BitsPerSample = 8`
 - `SamplesPerPixel` in `{1,3}`
 - `PlanarConfiguration = 1` (chunky). If tag **284 is absent**, DunTif assumes **chunky** (default per TIFF practice).
@@ -21,11 +21,14 @@ For **`Compression = 5`**, strips contain TIFF **LZW** bitstreams (modern MSB-fi
 
 For **`Compression = 8` or `32946`**, each strip is a **zlib** stream (`CMF`/`FLG` + deflate + Adler); inflate uses FPC **PasZLib** (`paszlib`), not an external libtiff DLL.
 
-Not supported yet (planned milestones):
+For **`Compression = 7`**, each strip is a **JPEG** bitstream (tables often in tag **347** `JPEGTables`). DunTif merges tables (without trailing `FF D9`) with strip body (without SOI) and decodes via **PasJPEG** / `TFPReaderJPEG` to RGB8.
+
+Not supported yet:
 
 - Tiles (`TileWidth`, `TileLength`, …)
-- JPEG / old-style JPEG-in-TIFF beyond reader scope
-- Photometric palette (`3`), CMYK (`5`), YCbCr (`6`), Lab (`8`), …
+- Old-style JPEG (`Compression=6`)
+- YCbCr without JPEG (e.g. LZW + `Photometric=6`)
+- Photometric palette (`3`), CMYK (`5`), Lab (`8`), …
 - ExtraSamples / alpha handling beyond “expand gray/RGB”
 - Orientation (`274`) is **ignored** (pixels are read in stored order)
 
@@ -38,8 +41,9 @@ These tags are used by the baseline strip decoding paths:
 | ImageWidth | 256 | SHORT or LONG |
 | ImageLength | 257 | SHORT or LONG |
 | BitsPerSample | 258 | SHORT array; must match `SamplesPerPixel` (with small allowance noted in parser for some grayscale writers) |
-| Compression | 259 | SHORT; `1`, `5`, `8`, `32946`, or `32773` |
-| PhotometricInterpretation | 262 | SHORT; must be `0`, `1`, or `2` |
+| Compression | 259 | SHORT; `1`, `5`, `7`, `8`, `32946`, or `32773` |
+| PhotometricInterpretation | 262 | SHORT; `0`, `1`, `2` (or `6` for JPEG) |
+| JPEGTables | 347 | UNDEFINED/BYTE, **optional**; quantization/Huffman tables for JPEG |
 | StripOffsets | 273 | SHORT or LONG array |
 | SamplesPerPixel | 277 | SHORT; must be `1` or `3` |
 | RowsPerStrip | 278 | SHORT or LONG; must not be `0` |
@@ -71,7 +75,7 @@ Common TIFF values:
 - `2` RGB
 - `6` YCbCr (often paired with JPEG compression in real-world TIFFs)
 
-Milestone 1 accepts `0/1/2` only. Value `6` is expected to fail until the YCbCr/JPEG milestones.
+Milestone 4 accepts `Photometric=6` only together with `Compression=7` (JPEG-in-TIFF).
 
 ## Errors you may see
 

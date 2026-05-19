@@ -12,13 +12,15 @@
   - `DunTif.ModelWriter.pas` — запис на `TDunTifDocument` чрез **fcl-image** `TFPWriterTiff`
   - `DunTif.TiffTypes.pas` — общи TIFF типове/records/enums
   - `DunTif.BinReader.pas` — endian-aware бинарни четения + проверки на граници (`EDunTifParseError`)
-  - `DunTif.TiffParser.pas` — парсване на TIFF IFD (`TDunTifTiffParser.ParseSingleFrame`)
+  - `DunTif.TiffParser.pas` — `ReadFileHeader`, `ParseFrame`, `ParseSingleFrame` (само първи IFD)
   - `DunTif.DecodeRaster8.pas` — общ chunky 8-bit RGB/gray strip writer
   - `DunTif.DecodeBaseline.pas` — некомпресирани strips → `TFPMemoryImage`
   - `DunTif.DecodePackBits.pas` — PackBits (`32773`) strips → `TFPMemoryImage`
   - `DunTif.DecodePredictor.pas` — обратно horizontal predictor (таг 317 = 2)
   - `DunTif.TiffLzw.pas` / `DunTif.DecodeLzw.pas` — TIFF LZW (`5`)
   - `DunTif.DecodeDeflate.pas` — zlib strips (`8`, `32946`) чрез PasZLib (`paszlib`)
+  - `DunTif.JpegDecode.pas` — JPEG strip → RGB8 (PasJPEG / `TFPReaderJPEG`)
+  - `DunTif.DecodeJpeg.pas` — JPEG-in-TIFF strips (`7`) + `DecodeRaster8`
 - `Package/`
   - `DunTif.lpk` / `DunTif.pas`
 - `Demo/`
@@ -62,14 +64,14 @@
 - `Metadata: TDunTifMetadata` — накратко декодирани TIFF полета за UI/логване:
   - `Compression`, `Photometric`, `SamplesPerPixel`, `BitsPerSample` (текст със запетаи)
 
-## Какво се поддържа днес (четец Milestones 1–3)
+## Какво се поддържа днес (четец Milestones 1–4)
 
 Pure Pascal четецът поддържа **strip TIFF** с компресии:
 
 - Един IFD (една страница)
 - Само strips (не tiles)
-- `Compression` в `{1, 5, 8, 32946, 32773}` — None, LZW, Adobe Deflate, ZIP/Deflate, PackBits
-- `PhotometricInterpretation` в `{0,1,2}` (валидирани като подходящи за Milestone 1)
+- `Compression` в `{1, 5, 7, 8, 32946, 32773}` — None, LZW, **JPEG**, Adobe Deflate, ZIP/Deflate, PackBits
+- `PhotometricInterpretation` в `{0,1,2}` за компресии 1/5/8/32946/32773; за **JPEG (`7`)** — `{6}` (YCbCr → RGB в `TFPMemoryImage`)
 - `BitsPerSample = 8`
 - `PlanarConfiguration = 1` (chunky). Ако таг **284 липсва**, по конвенция се приема **chunky**.
 - `SamplesPerPixel` в `{1,3}`
@@ -81,8 +83,8 @@ Pure Pascal четецът поддържа **strip TIFF** с компресии
 
 1. Milestone 1: baseline некомпресиран RGB/Gray + strips (pure Pascal четене)
 2. Milestone 2: PackBits (`32773`)
-3. Milestone 3 (текущ четец): LZW (`5`) + zlib Deflate strips (`8` / `32946`) + predictor таг **317**
-4. Milestone 4: JPEG-in-TIFF (`Compression=7`) + `Photometric=6` (YCbCr)
+3. Milestone 3: LZW (`5`) + zlib Deflate strips (`8` / `32946`) + predictor таг **317**
+4. Milestone 4 (текущ четец): JPEG-in-TIFF (`Compression=7`) + `Photometric=6` (YCbCr), таг **347** JPEGTables
 
 Виж също:
 

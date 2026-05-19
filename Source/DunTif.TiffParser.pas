@@ -11,6 +11,11 @@ uses
 type
   TDunTifTiffParser = class
   public
+    { TIFF file header only (stream position 0). }
+    class function ReadFileHeader(AStream: TStream): TTiffFileHeader; static;
+    { Parse one IFD at AIfdOffset into TTiffFrame (no DunTif validation). }
+    class function ParseFrame(AStream: TStream; AEndian: TTiffEndian; AIfdOffset: Cardinal): TTiffFrame; static;
+    { First IFD only: ReadFileHeader + ParseFrame + validate (v1 scope). }
     class function ParseSingleFrame(AStream: TStream): TTiffFrame; static;
   end;
 
@@ -316,13 +321,63 @@ begin
   Result := False;
 end;
 
-class function TDunTifTiffParser.ParseSingleFrame(AStream: TStream): TTiffFrame;
+procedure InitFrameDefaults(var Frame: TTiffFrame);
+begin
+  FillChar(Frame, SizeOf(Frame), 0);
+  Frame.YCbCrSubSampling[0] := 2;
+  Frame.YCbCrSubSampling[1] := 2;
+end;
+
+procedure ValidateParsedFrame(var Frame: TTiffFrame);
+begin
+  ValidateCommonFrame(Frame);
+  if Frame.Compression = Ord(tcJpeg) then
+    ValidateJpegFrame(Frame)
+  else
+  begin
+    if Frame.Compression = Ord(tcJpegOldStyle) then
+      raise EDunTifParseError.Create('DunTif: old-style JPEG (Compression=6) is not supported; use new JPEG (Compression=7)');
+    ValidateBaselineFrame(Frame);
+  end;
+end;
+
+class function TDunTifTiffParser.ReadFileHeader(AStream: TStream): TTiffFileHeader;
 var
-  hdr: array[0..1] of AnsiChar;
-  endian: TTiffEndian;
+  bom: array[0..1] of AnsiChar;
   r: TDunTifBinReader;
   magic: Word;
-  ifdOff: Cardinal;
+begin
+  if AStream = nil then
+    raise EDunTifParseError.Create('DunTif: stream is nil');
+
+  AStream.Position := 0;
+  AStream.ReadBuffer(bom[0], 2);
+  if (bom[0] = 'I') and (bom[1] = 'I') then
+    Result.Endian := teLittle
+  else if (bom[0] = 'M') and (bom[1] = 'M') then
+    Result.Endian := teBig
+  else
+    raise EDunTifParseError.Create('DunTif: not a TIFF stream (bad byte order mark)');
+
+  r := TDunTifBinReader.Create(AStream, Result.Endian);
+  try
+    magic := r.ReadU16;
+    if magic <> 42 then
+      raise EDunTifParseError.CreateFmt('DunTif: not a TIFF stream (magic=%d)', [magic]);
+
+    Result.FirstIfdOffset := r.ReadU32;
+    if Result.FirstIfdOffset = 0 then
+      raise EDunTifParseError.Create('DunTif: invalid TIFF (IFD offset=0)');
+  finally
+    r.Free;
+  end;
+end;
+
+class function TDunTifTiffParser.ParseFrame(AStream: TStream; AEndian: TTiffEndian;
+  AIfdOffset: Cardinal): TTiffFrame;
+var
+  r: TDunTifBinReader;
+  endian: TTiffEndian;
   entryCount: Word;
   entries: TTiffIfdEntryArray;
   i: Integer;
@@ -333,32 +388,16 @@ var
   rbw: TDoubleDynArray;
   subs: TWordDynArray;
 begin
-  FillChar(Result, SizeOf(Result), 0);
-  Result.YCbCrSubSampling[0] := 2;
-  Result.YCbCrSubSampling[1] := 2;
+  InitFrameDefaults(Result);
   if AStream = nil then
     raise EDunTifParseError.Create('DunTif: stream is nil');
+  if AIfdOffset = 0 then
+    raise EDunTifParseError.Create('DunTif: invalid IFD offset=0');
 
-  AStream.Position := 0;
-  AStream.ReadBuffer(hdr[0], 2);
-  if (hdr[0] = 'I') and (hdr[1] = 'I') then
-    endian := teLittle
-  else if (hdr[0] = 'M') and (hdr[1] = 'M') then
-    endian := teBig
-  else
-    raise EDunTifParseError.Create('DunTif: not a TIFF stream (bad byte order mark)');
-
+  endian := AEndian;
   r := TDunTifBinReader.Create(AStream, endian);
   try
-    magic := r.ReadU16;
-    if magic <> 42 then
-      raise EDunTifParseError.CreateFmt('DunTif: not a TIFF stream (magic=%d)', [magic]);
-
-    ifdOff := r.ReadU32;
-    if ifdOff = 0 then
-      raise EDunTifParseError.Create('DunTif: invalid TIFF (IFD offset=0)');
-
-    r.SeekAbs(ifdOff);
+    r.SeekAbs(AIfdOffset);
     entryCount := r.ReadU16;
     SetLength(entries, entryCount);
     for i := 0 to entryCount - 1 do
@@ -371,8 +410,7 @@ begin
         raise EDunTifParseError.CreateFmt('DunTif: unsupported TIFF tag type %d (tag %d)', [entries[i].TagType, entries[i].Tag]);
     end;
 
-    // nextIFDOffset := r.ReadU32; // ignored (v1: single frame)
-    // validate required tags and extract baseline fields
+    r.ReadU32; { next IFD offset; v1 uses first frame only }
 
     RequireTag('ImageWidth(256)', FindEntry(entries, TAG_ImageWidth, e));
     if e.TagType = Ord(tttShort) then
@@ -507,16 +545,15 @@ begin
   finally
     r.Free;
   end;
+end;
 
-  ValidateCommonFrame(Result);
-  if Result.Compression = Ord(tcJpeg) then
-    ValidateJpegFrame(Result)
-  else
-  begin
-    if Result.Compression = Ord(tcJpegOldStyle) then
-      raise EDunTifParseError.Create('DunTif: old-style JPEG (Compression=6) is not supported; use new JPEG (Compression=7)');
-    ValidateBaselineFrame(Result);
-  end;
+class function TDunTifTiffParser.ParseSingleFrame(AStream: TStream): TTiffFrame;
+var
+  hdr: TTiffFileHeader;
+begin
+  hdr := ReadFileHeader(AStream);
+  Result := ParseFrame(AStream, hdr.Endian, hdr.FirstIfdOffset);
+  ValidateParsedFrame(Result);
 end;
 
 end.

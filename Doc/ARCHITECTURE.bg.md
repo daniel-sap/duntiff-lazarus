@@ -9,7 +9,7 @@
 | `DunTif.Model` | `TDunTifDocument` притежава `TFPMemoryImage` и `TDunTifMetadata`. Дефинира `EDunTifError`. |
 | `DunTif.BinReader` | Ниско ниво четене от поток с endian и проверки на граници. Вдига `EDunTifParseError`. |
 | `DunTif.TiffTypes` | Общи enums/records (`TTiffFrame`, compression/photometric и др.). |
-| `DunTif.TiffParser` | Парсва TIFF header + първи IFD към `TTiffFrame` и валидира ограниченията за четеца. |
+| `DunTif.TiffParser` | `ReadFileHeader` + `ParseFrame` (IFD → `TTiffFrame`); `ParseSingleFrame` = първи кадър + валидация. |
 | `DunTif.DecodeRaster8` | Записва декодирани chunky 8-bit strip проби в `TFPMemoryImage` (общо за декодерите). |
 | `DunTif.DecodePredictor` | Обратно horizontal predictor (таг **317 = 2**) върху суров strip буфер при нужда. |
 | `DunTif.DecodeBaseline` | Чете некомпресирани strip байтове и подава към `DecodeRaster8`. |
@@ -17,6 +17,8 @@
 | `DunTif.TiffLzw` | TIFF LZW битов поток → сурови байтове. |
 | `DunTif.DecodeLzw` | LZW на strip + predictor + `DecodeRaster8`. |
 | `DunTif.DecodeDeflate` | zlib inflate на strip (PasZLib) + predictor + `DecodeRaster8`. |
+| `DunTif.JpegDecode` | Сглобява JPEG strip поток (JPEGTables + strip) и декодира до RGB8. |
+| `DunTif.DecodeJpeg` | JPEG-in-TIFF strips (`7`) + `DecodeRaster8`. |
 | `DunTif.ModelReader` | Оркестрира parse + decode; попълва `TDunTifDocument.Metadata`. |
 | `DunTif.ModelWriter` | Запис чрез `TFPWriterTiff` (fcl-image). |
 
@@ -32,6 +34,7 @@ flowchart LR
   packbits[DunTifPackBitsDecoder]
   lzw[DunTifLzwDecoder]
   deflate[DunTifDeflateDecoder]
+  jpeg[DunTifJpegDecoder]
   doc[TDunTifDocument]
   fpimg[TFPMemoryImage]
 
@@ -40,13 +43,15 @@ flowchart LR
   decode -->|32773| packbits --> fpimg
   decode -->|5| lzw --> fpimg
   decode -->|8 / 32946| deflate --> fpimg
+  decode -->|7| jpeg --> fpimg
   doc --> fpimg
 ```
 
 Подробности:
 
-1. `TDunTifModelReader.LoadFromStream` извиква `TDunTifTiffParser.ParseSingleFrame`, който парсва TIFF от началото на потока (вътрешно през `TDunTifBinReader`).
-2. Според `TTiffFrame.Compression` се избира декодер; всички записват чрез `TDunTifRaster8.WriteChunkyStrip`. При `Predictor = 2` се прилага `DecodePredictor` след декомпресия на всеки strip.
+1. `TDunTifModelReader.LoadFromStream` извиква `TDunTifTiffParser.ParseSingleFrame` (`ReadFileHeader` от offset 0, после `ParseFrame` на първия IFD, после валидация).
+2. Според `TTiffFrame.Compression` се избира декодер; всички записват чрез `TDunTifRaster8.WriteChunkyStrip`. При `Predictor = 2` се прилага `DecodePredictor` след декомпресия на всеки strip (не при JPEG).
+3. При JPEG (`7`) strip байтовете се слепват с таг **347** `JPEGTables` (без завършващ `FF D9` от таблиците) и се подават на `TFPReaderJPEG`; изходът е RGB8.
 
 ## Път при запис (текущ)
 

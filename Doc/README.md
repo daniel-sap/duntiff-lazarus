@@ -12,7 +12,7 @@ The long-term goal is a **pure Pascal TIFF decoder** implemented incrementally (
   - `DunTif.ModelWriter.pas` — save `TDunTifDocument` using **fcl-image** `TFPWriterTiff`
   - `DunTif.TiffTypes.pas` — shared TIFF-ish records/enums
   - `DunTif.BinReader.pas` — endian-aware binary reads + bounds checks (`EDunTifParseError`)
-  - `DunTif.TiffParser.pas` — TIFF IFD parsing (`TDunTifTiffParser.ParseSingleFrame`)
+  - `DunTif.TiffParser.pas` — `ReadFileHeader`, `ParseFrame`, `ParseSingleFrame` (first IFD only)
   - `DunTif.DecodeRaster8.pas` — shared chunky 8-bit RGB/gray strip writer
   - `DunTif.DecodeBaseline.pas` — uncompressed strips → `TFPMemoryImage`
   - `DunTif.DecodePackBits.pas` — PackBits (`32773`) strips → `TFPMemoryImage`
@@ -62,14 +62,14 @@ Writing currently uses **fcl-image** `TFPWriterTiff` (not the pure Pascal encode
 - `Metadata: TDunTifMetadata` — small decoded TIFF header fields useful for UI/logging:
   - `Compression`, `Photometric`, `SamplesPerPixel`, `BitsPerSample` (comma-separated text)
 
-## Supported TIFF subset today (Milestones 1–3 reader)
+## Supported TIFF subset today (Milestones 1–4 reader)
 
 The pure Pascal reader supports **strip TIFF** with:
 
 - One IFD (single page)
 - Strips only (no tiles)
-- `Compression` in `{1, 5, 8, 32946, 32773}` — None, LZW, Adobe Deflate, ZIP/Deflate, PackBits
-- `PhotometricInterpretation` in `{0,1,2}` (common grayscale / RGB baseline cases handled by validation)
+- `Compression` in `{1, 5, 7, 8, 32946, 32773}` — None, LZW, **JPEG**, Adobe Deflate, ZIP/Deflate, PackBits
+- `PhotometricInterpretation` in `{0,1,2}` for non-JPEG; **`6` (YCbCr)** with `Compression=7` (decoded to RGB)
 - `BitsPerSample = 8`
 - `PlanarConfiguration = 1` (chunky). If tag **284 is missing**, it defaults to **chunky** per TIFF convention.
 - `SamplesPerPixel` in `{1,3}`
@@ -81,8 +81,8 @@ Anything outside this set should fail fast with a descriptive error.
 
 1. Milestone 1: baseline uncompressed RGB/Gray + strips (pure Pascal read path)
 2. Milestone 2: PackBits (`32773`)
-3. Milestone 3 (current reader scope): LZW (`5`) + zlib-wrapped Deflate strips (`8` / `32946`) + predictor tag **317**
-4. Milestone 4: JPEG-in-TIFF (`Compression=7`) + `Photometric=6` (YCbCr) conversion
+3. Milestone 3: LZW (`5`) + zlib-wrapped Deflate strips (`8` / `32946`) + predictor tag **317**
+4. Milestone 4 (current reader): JPEG-in-TIFF (`Compression=7`) + `Photometric=6` (YCbCr), tag **347** JPEGTables
 
 See also:
 
