@@ -50,7 +50,6 @@
         <ComponentName Value="FrmNewDoc"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UnitName Value="NewDocForm"/>
       </Unit>
     </Units>
   </ProjectOptions>
@@ -58,7 +57,7 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="DunTifDemo"/>
+      <Filename Value="..\Bin\$(TargetCPU)-$(TargetOS)\DunTifDemo"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
