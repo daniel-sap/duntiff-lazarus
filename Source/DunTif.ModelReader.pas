@@ -23,19 +23,12 @@ uses
   DunTif.DecodeBaseline,
   DunTif.DecodePackBits,
   DunTif.DecodeLzw,
-  DunTif.DecodeDeflate;
+  DunTif.DecodeDeflate,
+  DunTif.DecodeJpeg;
 
 function FormatTiffReadFailure(const E: Exception): string;
-var
-  msg: string;
 begin
-  msg := E.Message;
-  { FPReadTiff does not decode PhotometricInterpretation 6 (YCbCr), common with JPEG-in-TIFF. }
-  if Pos('Photometric interpretation not handled (6)', msg) > 0 then
-    Exit(msg + ' — FPReadTiff (fcl-image) does not support PhotometricInterpretation 6 (YCbCr), often used with JPEG-in-TIFF. Re-export as RGB TIFF or PNG.');
-  if Pos('Photometric interpretation not handled', msg) > 0 then
-    Exit(msg + ' — This photometric mode is not implemented in FPReadTiff; try RGB or grayscale TIFF.');
-  Result := msg;
+  Result := E.Message;
 end;
 
 class function TDunTifModelReader.LoadFromStream(AStream: TStream): TDunTifDocument;
@@ -60,8 +53,12 @@ begin
         TDunTifLzwDecoder.DecodeToFPImage(AStream, frame, Result.Image);
       Ord(tcDeflateAdobe), Ord(tcDeflate):
         TDunTifDeflateDecoder.DecodeToFPImage(AStream, frame, Result.Image);
+      Ord(tcJpeg):
+        TDunTifJpegDecoder.DecodeToFPImage(AStream, frame, Result.Image);
     else
-      raise EDunTifError.CreateFmt('DunTif: unsupported compression %d', [frame.Compression]);
+      raise EDunTifError.CreateFmt(
+        'DunTif: unsupported compression %d (supports None=1, LZW=5, JPEG=7, Deflate=8/32946, PackBits=32773)',
+        [frame.Compression]);
     end;
 
     bitsText := '';

@@ -73,6 +73,13 @@ type
     StripByteCounts: array of Int64;
     { Tag 317; 1 = none, 2 = horizontal differencing (applied after LZW/Deflate). Default 1 if absent. }
     Predictor: Word;
+    { JPEG-in-TIFF (tags 513/514/530/532); meaningful when Compression = 7. }
+    JpegInterchangeOffset: Int64;
+    JpegInterchangeLength: Int64;
+    JpegTables: TBytes;
+    YCbCrSubSampling: array[0..1] of Word;
+    ReferenceBlackWhite: array[0..5] of Double;
+    HasReferenceBlackWhite: Boolean;
   end;
 
 implementation

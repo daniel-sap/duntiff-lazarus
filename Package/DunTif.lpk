@@ -58,6 +58,14 @@
         <UnitName Value="DunTif.DecodeDeflate"/>
       </Item>
       <Item>
+        <Filename Value="..\Source\DunTif.JpegDecode.pas"/>
+        <UnitName Value="DunTif.JpegDecode"/>
+      </Item>
+      <Item>
+        <Filename Value="..\Source\DunTif.DecodeJpeg.pas"/>
+        <UnitName Value="DunTif.DecodeJpeg"/>
+      </Item>
+      <Item>
         <Filename Value="..\Source\DunTif.ModelReader.pas"/>
         <UnitName Value="DunTif.ModelReader"/>
       </Item>

@@ -11,7 +11,8 @@ uses
   DunTif.Model, DunTif.TiffTypes, DunTif.BinReader, DunTif.TiffParser, 
   DunTif.DecodeRaster8, DunTif.DecodeBaseline, DunTif.DecodePackBits, 
   DunTif.DecodePredictor, DunTif.TiffLzw, DunTif.DecodeLzw, 
-  DunTif.DecodeDeflate, DunTif.ModelReader, DunTif.ModelWriter, 
+  DunTif.DecodeDeflate, DunTif.JpegDecode, DunTif.DecodeJpeg,
+  DunTif.ModelReader, DunTif.ModelWriter, 
   LazarusPackageIntf;
 
 implementation
