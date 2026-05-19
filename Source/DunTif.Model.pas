@@ -16,7 +16,8 @@ type
 
   TDunTifPixelFormat = (
     pfGray8,
-    pfRGB8
+    pfRGB8,
+    pfRGBA8
   );
 
   TDunTifMetadata = record
@@ -109,6 +110,12 @@ begin
         FMetadata.SamplesPerPixel := 3;
         FMetadata.BitsPerSample := '8,8,8';
       end;
+    pfRGBA8:
+      begin
+        FMetadata.Photometric := Ord(tpRGB);
+        FMetadata.SamplesPerPixel := 4;
+        FMetadata.BitsPerSample := '8,8,8,8';
+      end;
   end;
 end;
 
@@ -133,9 +140,10 @@ begin
   case md.SamplesPerPixel of
     1: AFormat := pfGray8;
     3: AFormat := pfRGB8;
+    4: AFormat := pfRGBA8;
   else
     raise EDunTifError.CreateFmt(
-      'DunTif: unsupported SamplesPerPixel %d for document model (supports 1 or 3)',
+      'DunTif: unsupported SamplesPerPixel %d for document model (supports 1, 3, or 4)',
       [md.SamplesPerPixel]);
   end;
 end;

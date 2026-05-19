@@ -11,7 +11,7 @@ The strip reader supports **uncompressed**, **PackBits**, **LZW**, **zlib-wrappe
 - `Compression` in `{1, 5, 7, 8, 32946, 32773}`
 - `PhotometricInterpretation` in `{0,1,2}` for non-JPEG; **`6` (YCbCr)** with `Compression=7`
 - `BitsPerSample = 8`
-- `SamplesPerPixel` in `{1,3}`
+- `SamplesPerPixel` in `{1,3,4}` (`4` = RGBA, Photometric RGB only)
 - `PlanarConfiguration = 1` (chunky). If tag **284 is absent**, DunTif assumes **chunky** (default per TIFF practice).
 - `Predictor` tag **317**: `1` (none, default if absent) or `2` (horizontal differencing). For `2`, DunTif undoes differencing **after** decompressing each strip.
 
@@ -29,7 +29,8 @@ Not supported yet:
 - Old-style JPEG (`Compression=6`)
 - YCbCr without JPEG (e.g. LZW + `Photometric=6`)
 - Photometric palette (`3`), CMYK (`5`), Lab (`8`), …
-- ExtraSamples / alpha handling beyond “expand gray/RGB”
+- ExtraSamples beyond RGBA (`SamplesPerPixel=4`, tag **338**, unassociated/associated alpha)
+- Gray+alpha (`SamplesPerPixel=2`), CMYK, palette, …
 - Orientation (`274`) is **ignored** (pixels are read in stored order)
 
 ## Tags DunTif reads (minimum set)
@@ -45,7 +46,8 @@ These tags are used by the baseline strip decoding paths:
 | PhotometricInterpretation | 262 | SHORT; `0`, `1`, `2` (or `6` for JPEG) |
 | JPEGTables | 347 | UNDEFINED/BYTE, **optional**; quantization/Huffman tables for JPEG |
 | StripOffsets | 273 | SHORT or LONG array |
-| SamplesPerPixel | 277 | SHORT; must be `1` or `3` |
+| SamplesPerPixel | 277 | SHORT; `1`, `3`, or `4` (RGBA) |
+| ExtraSamples | 338 | SHORT array; optional; `2` = unassociated alpha (typical for RGBA) |
 | RowsPerStrip | 278 | SHORT or LONG; must not be `0` |
 | StripByteCounts | 279 | SHORT or LONG array; compressed sizes for PackBits/LZW/Deflate |
 | PlanarConfiguration | 284 | SHORT **optional**; if missing → chunky (`1`) |

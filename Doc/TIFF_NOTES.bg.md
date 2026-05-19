@@ -11,7 +11,7 @@ Strip четецът поддържа **некомпресиран**, **PackBits
 - `Compression` в `{1, 5, 7, 8, 32946, 32773}`
 - `PhotometricInterpretation` в `{0,1,2}` (компресии 1/5/8/32946/32773); при **JPEG** — `{6}` (YCbCr)
 - `BitsPerSample = 8`
-- `SamplesPerPixel` в `{1,3}`
+- `SamplesPerPixel` в `{1,3,4}` (`4` = RGBA, само Photometric RGB)
 - `PlanarConfiguration = 1` (chunky). Ако таг **284 липсва**, DunTif приема **chunky** по TIFF практика.
 - Таг **317 Predictor**: `1` (няма, по подразбиране ако липсва) или `2` (хоризонтална разлика). При `2` DunTif прави обратното след декомпресия на всеки strip.
 
@@ -29,7 +29,8 @@ Strip четецът поддържа **некомпресиран**, **PackBits
 - Old-style JPEG (`Compression=6`)
 - YCbCr без JPEG (напр. LZW + `Photometric=6`)
 - Палитра (`Photometric=3`), CMYK (`5`), Lab (`8`), …
-- ExtraSamples / алфа канал извън простото разширяване до RGB
+- ExtraSamples извън RGBA (`SamplesPerPixel=4`, таг **338**)
+- Gray+alpha (`SamplesPerPixel=2`), CMYK, палитра, …
 - Orientation (`274`) — **не се прилага** (пикселите се четат в запаметения ред)
 
 ## Тагове, които DunTif чете (минимум)
@@ -43,7 +44,8 @@ Strip четецът поддържа **некомпресиран**, **PackBits
 | PhotometricInterpretation | 262 | SHORT; `0`, `1`, `2` (или `6` при JPEG) |
 | JPEGTables | 347 | UNDEFINED/BYTE, **по избор**; Huffman/quant таблици за JPEG |
 | StripOffsets | 273 | SHORT или LONG масив |
-| SamplesPerPixel | 277 | SHORT; `1` или `3` |
+| SamplesPerPixel | 277 | SHORT; `1`, `3` или `4` (RGBA) |
+| ExtraSamples | 338 | SHORT масив; по избор; `2` = несвързан alpha |
 | RowsPerStrip | 278 | SHORT или LONG; не може да е `0` |
 | StripByteCounts | 279 | SHORT или LONG масив; компресирани размери при PackBits/LZW/Deflate |
 | PlanarConfiguration | 284 | SHORT, **по избор**; ако липсва → chunky (`1`) |

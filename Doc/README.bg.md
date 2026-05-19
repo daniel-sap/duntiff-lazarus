@@ -74,7 +74,7 @@ Pure Pascal четецът поддържа **strip TIFF** с компресии
 - `PhotometricInterpretation` в `{0,1,2}` за компресии 1/5/8/32946/32773; за **JPEG (`7`)** — `{6}` (YCbCr → RGB в `TFPMemoryImage`)
 - `BitsPerSample = 8`
 - `PlanarConfiguration = 1` (chunky). Ако таг **284 липсва**, по конвенция се приема **chunky**.
-- `SamplesPerPixel` в `{1,3}`
+- `SamplesPerPixel` в `{1,3,4}` (RGBA с Photometric RGB)
 - `Predictor = 1` или `2`; ако таг **317 липсва** → **1**
 
 Всичко извън този подмножество трябва да завърши с ясна грешка.
@@ -84,7 +84,8 @@ Pure Pascal четецът поддържа **strip TIFF** с компресии
 1. Milestone 1: baseline некомпресиран RGB/Gray + strips (pure Pascal четене)
 2. Milestone 2: PackBits (`32773`)
 3. Milestone 3: LZW (`5`) + zlib Deflate strips (`8` / `32946`) + predictor таг **317**
-4. Milestone 4 (текущ четец): JPEG-in-TIFF (`Compression=7`) + `Photometric=6` (YCbCr), таг **347** JPEGTables
+4. Milestone 4: JPEG-in-TIFF (`Compression=7`) + `Photometric=6` (YCbCr), таг **347** JPEGTables
+5. Milestone 5: RGBA (`SamplesPerPixel=4`, таг **338**); запис без alpha за Gray/RGB документи
 
 Виж също:
 

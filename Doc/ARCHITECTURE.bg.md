@@ -10,7 +10,7 @@
 | `DunTif.BinReader` | Ниско ниво четене от поток с endian и проверки на граници. Вдига `EDunTifParseError`. |
 | `DunTif.TiffTypes` | Общи enums/records (`TTiffFrame`, compression/photometric и др.). |
 | `DunTif.TiffParser` | `ReadFileHeader` + `ParseFrame` (IFD → `TTiffFrame`); `ParseSingleFrame` = първи кадър + валидация. |
-| `DunTif.DecodeRaster8` | Записва декодирани chunky 8-bit strip проби в `TFPMemoryImage` (общо за декодерите). |
+| `DunTif.DecodeRaster8` | Записва chunky 8-bit Gray/RGB/RGBA strip проби в `TFPMemoryImage` (общо за декодерите). |
 | `DunTif.DecodePredictor` | Обратно horizontal predictor (таг **317 = 2**) върху суров strip буфер при нужда. |
 | `DunTif.DecodeBaseline` | Чете некомпресирани strip байтове и подава към `DecodeRaster8`. |
 | `DunTif.DecodePackBits` | Разкомпресира PackBits strips и подава към `DecodeRaster8`. |
@@ -55,7 +55,7 @@ flowchart LR
 
 ## Път при запис (текущ)
 
-`TDunTifModelWriter` сериализира `TFPMemoryImage` към TIFF чрез fcl-image `TFPWriterTiff`. Това е независимо от pure Pascal четенето.
+`TDunTifModelWriter` сериализира `TFPMemoryImage` чрез fcl-image `TFPWriterTiff`. За `pfGray8`/`pfRGB8` задава `TiffAlphaBits=0` (round-trip с четеца); за `pfRGBA8` записва 8-bit alpha.
 
 ## Изключения
 

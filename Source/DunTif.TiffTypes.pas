@@ -52,6 +52,13 @@ type
     tpcPlanar = 2
   );
 
+  { Tag 338 ExtraSamples values (first extra channel). }
+  TTiffExtraSample = (
+    tesUnspecified = 0,
+    tesAssociatedAlpha = 1,
+    tesUnassociatedAlpha = 2
+  );
+
   TTiffIfdEntry = record
     Tag: Word;
     TagType: Word;
@@ -87,9 +94,18 @@ type
     YCbCrSubSampling: array[0..1] of Word;
     ReferenceBlackWhite: array[0..5] of Double;
     HasReferenceBlackWhite: Boolean;
+    { Tag 338; one SHORT per extra sample (RGBA: usually unassociated alpha = 2). }
+    ExtraSamples: array of Word;
   end;
 
+function DunTifStripSamplesPerPixelSupported(ASamplesPerPixel: Word): Boolean;
+
 implementation
+
+function DunTifStripSamplesPerPixelSupported(ASamplesPerPixel: Word): Boolean;
+begin
+  Result := (ASamplesPerPixel = 1) or (ASamplesPerPixel = 3) or (ASamplesPerPixel = 4);
+end;
 
 end.
 

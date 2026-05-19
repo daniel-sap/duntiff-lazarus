@@ -10,7 +10,7 @@ uses
   DunTif.TiffTypes;
 
 type
-  { Shared chunky 8-bit RGB/Gray strip writer for Milestone 1–2 decoders. }
+  { Shared chunky 8-bit Gray/RGB/RGBA strip writer for strip decoders. }
 
   TDunTifRaster8 = class
   public
@@ -37,11 +37,16 @@ var
   needBytes: Int64;
   p: Int64;
   c: TFPColor;
-  bR, bG, bB: Byte;
+  bR, bG, bB, bA: Byte;
   bY: Byte;
 begin
   if AOut = nil then
     Exit;
+
+  if not DunTifStripSamplesPerPixelSupported(Frame.SamplesPerPixel) then
+    raise EDunTifParseError.CreateFmt(
+      'DunTif: unsupported SamplesPerPixel %d in raster writer (supports 1, 3, or 4)',
+      [Frame.SamplesPerPixel]);
 
   bytesPerPixel := Frame.SamplesPerPixel;
   bytesPerRow := Int64(Frame.Width) * bytesPerPixel;
@@ -56,7 +61,20 @@ begin
   begin
     for x := 0 to Integer(Frame.Width) - 1 do
     begin
-      if Frame.SamplesPerPixel = 3 then
+      if Frame.SamplesPerPixel = 4 then
+      begin
+        bR := Buf[p + 0];
+        bG := Buf[p + 1];
+        bB := Buf[p + 2];
+        bA := Buf[p + 3];
+        c.red := ByteToFPWord(bR);
+        c.green := ByteToFPWord(bG);
+        c.blue := ByteToFPWord(bB);
+        c.alpha := ByteToFPWord(bA);
+        AOut.Colors[x, y] := c;
+        Inc(p, 4);
+      end
+      else if Frame.SamplesPerPixel = 3 then
       begin
         bR := Buf[p + 0];
         bG := Buf[p + 1];

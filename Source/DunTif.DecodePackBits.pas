@@ -99,8 +99,9 @@ begin
   if (Frame.Width = 0) or (Frame.Height = 0) then
     raise EDunTifParseError.Create('DunTif: invalid frame dimensions');
 
-  if (Frame.SamplesPerPixel <> 1) and (Frame.SamplesPerPixel <> 3) then
-    raise EDunTifParseError.CreateFmt('DunTif: unsupported SamplesPerPixel %d (PackBits decoder)', [Frame.SamplesPerPixel]);
+  if not DunTifStripSamplesPerPixelSupported(Frame.SamplesPerPixel) then
+    raise EDunTifParseError.CreateFmt(
+      'DunTif: unsupported SamplesPerPixel %d (PackBits decoder)', [Frame.SamplesPerPixel]);
 
   bytesPerPixel := Frame.SamplesPerPixel;
   AOut.SetSize(Frame.Width, Frame.Height);

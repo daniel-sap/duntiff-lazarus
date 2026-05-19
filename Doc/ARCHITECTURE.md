@@ -10,7 +10,7 @@ This document describes how the DunTif package is structured today and how data 
 | `DunTif.BinReader` | Low-level stream reads with endian selection and bounds checks. Raises `EDunTifParseError`. |
 | `DunTif.TiffTypes` | Shared enums/records (`TTiffFrame`, compression/photometric enums, etc.). |
 | `DunTif.TiffParser` | `ReadFileHeader` + `ParseFrame` (IFD → `TTiffFrame`); `ParseSingleFrame` = first frame + validation. |
-| `DunTif.DecodeRaster8` | Writes decoded chunky 8-bit strip samples into `TFPMemoryImage` (shared by decoders). |
+| `DunTif.DecodeRaster8` | Writes decoded chunky 8-bit Gray/RGB/RGBA strip samples into `TFPMemoryImage` (shared by decoders). |
 | `DunTif.DecodePredictor` | Undoes horizontal predictor (tag **317 = 2**) on raw strip bytes when needed. |
 | `DunTif.DecodeBaseline` | Reads uncompressed strip bytes and feeds `DecodeRaster8`. |
 | `DunTif.DecodePackBits` | Decompresses PackBits strips then feeds `DecodeRaster8`. |
@@ -55,7 +55,7 @@ Details:
 
 ## Write path (current)
 
-`TDunTifModelWriter` uses fcl-image `TFPWriterTiff` to serialize `TFPMemoryImage` to TIFF. This is independent from the pure Pascal reader stack.
+`TDunTifModelWriter` uses fcl-image `TFPWriterTiff` to serialize `TFPMemoryImage` to TIFF. For `pfGray8`/`pfRGB8` it sets `TiffAlphaBits=0` so saves are RGB/Gray (round-trip with the reader); `pfRGBA8` writes 8-bit alpha.
 
 ## Exceptions
 

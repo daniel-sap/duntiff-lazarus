@@ -38,6 +38,7 @@ const
   TAG_Compression = 259;
   TAG_PhotometricInterpretation = 262;
   TAG_StripOffsets = 273;
+  TAG_ExtraSamples = 338;
   TAG_SamplesPerPixel = 277;
   TAG_RowsPerStrip = 278;
   TAG_StripByteCounts = 279;
@@ -283,8 +284,24 @@ begin
     (Result.Photometric = Ord(tpBlackIsZero))) then
     raise EDunTifParseError.CreateFmt('DunTif: unsupported photometric %d (supports RGB/Gray only)', [Result.Photometric]);
 
-  if (Result.SamplesPerPixel <> 1) and (Result.SamplesPerPixel <> 3) then
-    raise EDunTifParseError.CreateFmt('DunTif: unsupported SamplesPerPixel %d (supports 1 or 3)', [Result.SamplesPerPixel]);
+  if not DunTifStripSamplesPerPixelSupported(Result.SamplesPerPixel) then
+    raise EDunTifParseError.CreateFmt(
+      'DunTif: unsupported SamplesPerPixel %d (supports 1, 3, or 4)', [Result.SamplesPerPixel]);
+
+  if Result.SamplesPerPixel = 4 then
+  begin
+    if Result.Photometric <> Ord(tpRGB) then
+      raise EDunTifParseError.CreateFmt(
+        'DunTif: SamplesPerPixel=4 requires Photometric RGB (2) (got %d)', [Result.Photometric]);
+    if Length(Result.ExtraSamples) > 0 then
+    begin
+      if (Result.ExtraSamples[0] <> Ord(tesAssociatedAlpha)) and
+        (Result.ExtraSamples[0] <> Ord(tesUnassociatedAlpha)) and
+        (Result.ExtraSamples[0] <> Ord(tesUnspecified)) then
+        raise EDunTifParseError.CreateFmt(
+          'DunTif: unsupported ExtraSamples[0]=%d (supports 0, 1, or 2)', [Result.ExtraSamples[0]]);
+    end;
+  end;
 
   if (Result.Predictor <> 1) and (Result.Predictor <> 2) then
     raise EDunTifParseError.CreateFmt('DunTif: unsupported Predictor %d (supports none=1 or horizontal=2)', [Result.Predictor]);
@@ -453,6 +470,16 @@ begin
     SetLength(Result.BitsPerSample, Length(bits));
     for i := 0 to High(bits) do
       Result.BitsPerSample[i] := bits[i];
+
+    if FindEntry(entries, TAG_ExtraSamples, e) then
+    begin
+      if e.TagType <> Ord(tttShort) then
+        raise EDunTifParseError.Create('DunTif: ExtraSamples has unsupported type');
+      bits := ReadU16Array(r, e, endian);
+      SetLength(Result.ExtraSamples, Length(bits));
+      for i := 0 to High(bits) do
+        Result.ExtraSamples[i] := bits[i];
+    end;
 
     RequireTag('RowsPerStrip(278)', FindEntry(entries, TAG_RowsPerStrip, e));
     if e.TagType = Ord(tttShort) then

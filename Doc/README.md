@@ -72,7 +72,7 @@ The pure Pascal reader supports **strip TIFF** with:
 - `PhotometricInterpretation` in `{0,1,2}` for non-JPEG; **`6` (YCbCr)** with `Compression=7` (decoded to RGB)
 - `BitsPerSample = 8`
 - `PlanarConfiguration = 1` (chunky). If tag **284 is missing**, it defaults to **chunky** per TIFF convention.
-- `SamplesPerPixel` in `{1,3}`
+- `SamplesPerPixel` in `{1,3,4}` (RGBA with Photometric RGB)
 - `Predictor = 1` (none) or `2` (horizontal differencing); if absent, **1** is assumed.
 
 Anything outside this set should fail fast with a descriptive error.
@@ -82,7 +82,8 @@ Anything outside this set should fail fast with a descriptive error.
 1. Milestone 1: baseline uncompressed RGB/Gray + strips (pure Pascal read path)
 2. Milestone 2: PackBits (`32773`)
 3. Milestone 3: LZW (`5`) + zlib-wrapped Deflate strips (`8` / `32946`) + predictor tag **317**
-4. Milestone 4 (current reader): JPEG-in-TIFF (`Compression=7`) + `Photometric=6` (YCbCr), tag **347** JPEGTables
+4. Milestone 4: JPEG-in-TIFF (`Compression=7`) + `Photometric=6` (YCbCr), tag **347** JPEGTables
+5. Milestone 5: RGBA (`SamplesPerPixel=4`, tag **338** ExtraSamples); writer omits alpha for Gray/RGB documents
 
 See also:
 

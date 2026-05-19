@@ -18,11 +18,12 @@ type
 implementation
 
 uses
-  FPImage, FPWriteTiff;
+  FPImage, FPWriteTiff, FPTiffCmn;
 
 class procedure TDunTifModelWriter.SaveToStream(AStream: TStream; ADoc: TDunTifDocument);
 var
   w: TFPWriterTiff;
+  img: TFPMemoryImage;
 begin
   if AStream = nil then
     raise EDunTifError.Create('DunTif: stream is nil');
@@ -34,10 +35,18 @@ begin
   if ADoc.Image = nil then
     raise EDunTifError.Create('DunTif: document image is nil');
 
+  img := ADoc.Image;
+  case ADoc.PixelFormat of
+    pfGray8, pfRGB8:
+      img.Extra[TiffAlphaBits] := '0';
+    pfRGBA8:
+      img.Extra[TiffAlphaBits] := '8';
+  end;
+
   w := TFPWriterTiff.Create;
   try
     try
-      ADoc.Image.SaveToStream(AStream, w);
+      img.SaveToStream(AStream, w);
     except
       on E: Exception do
         raise EDunTifError.CreateFmt('DunTif: failed to write TIFF stream (%s)', [E.Message]);
